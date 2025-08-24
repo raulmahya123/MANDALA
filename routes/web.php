@@ -120,6 +120,7 @@ Route::middleware(['auth','role:super_admin,admin'])
     Route::post('forms', [FormBuilderController::class,'store'])->name('forms.store');
     Route::get('forms/{form:slug}/edit', [FormBuilderController::class,'edit'])->name('forms.edit');
     Route::put('forms/{form:slug}', [FormBuilderController::class,'update'])->name('forms.update');
+    Route::delete('forms/{form:slug}', [FormBuilderController::class,'destroy'])->name('forms.destroy');
 
     // Kelola Fields Form
     Route::post('forms/{form:slug}/fields', [FormBuilderController::class,'addField'])->name('forms.fields.store');
