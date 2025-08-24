@@ -29,6 +29,9 @@
     /* glass */
     .glass { backdrop-filter:saturate(160%) blur(8px) }
   </style>
+
+  {{-- slot tambahan head per-halaman --}}
+  @stack('head')
 </head>
 <body class="bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 text-slate-800 dark:text-slate-100">
 
@@ -55,6 +58,13 @@
   </div>
 
   <div class="min-h-screen flex">
+    {{-- Backdrop (mobile) --}}
+    <div
+      class="lg:hidden fixed inset-0 z-30 bg-black/30 backdrop-blur-sm"
+      x-show="sidebarOpen"
+      x-transition.opacity
+      @click="sidebarOpen=false">
+    </div>
 
     <!-- Sidebar -->
     <aside id="sidebar"
@@ -73,7 +83,6 @@
             <div class="text-[10px] uppercase text-slate-500">for {{ config('app.name') }}</div>
           </div>
         </div>
-        <!-- (hapus tombol di sini) -->
       </div>
 
       <!-- Brand (mobile) -->
@@ -119,6 +128,24 @@
           <span class="nav-label">Documents</span>
         </a>
 
+        {{-- === Forms (admin & super_admin) === --}}
+        <a href="{{ route('admin.forms.index') }}"
+           class="nav-link group flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 {{ request()->routeIs('admin.forms.*') ? 'nav-active' : '' }}">
+          <svg class="w-5 h-5 opacity-80 group-hover:opacity-100" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-width="1.6" stroke-linecap="round" d="M8 6h8M8 12h8M8 18h5"/>
+          </svg>
+          <span class="nav-label">Forms</span>
+        </a>
+
+        {{-- === Approvals (pengajuan form) === --}}
+        <a href="{{ route('admin.approvals.index') }}"
+           class="nav-link group flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 {{ request()->routeIs('admin.approvals.*') ? 'nav-active' : '' }}">
+          <svg class="w-5 h-5 opacity-80 group-hover:opacity-100" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-width="1.6" stroke-linecap="round" d="M5 12h14M5 12a7 7 0 1 0 14 0 7 7 0 0 0-14 0Zm4 0 2 2 4-4"/>
+          </svg>
+          <span class="nav-label">Approvals</span>
+        </a>
+
         @if(auth()->user()?->role==='super_admin')
         <div class="nav-divider px-3 text-[11px] font-semibold tracking-wide text-slate-500 dark:text-slate-400 mt-4 mb-2 uppercase">Access Control</div>
 
@@ -157,7 +184,7 @@
       <header class="hidden lg:flex sticky top-0 z-30 items-center justify-between h-16 px-6 glass bg-white/70 dark:bg-slate-900/70 border-b border-slate-200/60 dark:border-slate-800">
         <div class="flex items-center gap-3">
           <button
-            @click="toggleCollapse()"
+            @click="toggleCollapse"
             class="hidden lg:flex p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
             aria-label="Collapse Sidebar">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -175,7 +202,7 @@
                    class="w-96 rounded-2xl border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/60 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400">
           </form>
 
-          <button @click="toggleDark()" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="Tema">
+          <button @click="toggleDark" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="Tema">
             <template x-if="!dark">
               <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12Z"/></svg>
             </template>
@@ -227,8 +254,29 @@
           </div>
         </div>
 
-        @if(session('status'))
-          <div class="rounded-2xl border border-emerald-200 text-emerald-800 bg-emerald-50 px-4 py-3 mb-6">{{ session('status') }}</div>
+        {{-- Flash & Errors --}}
+        @if(session('ok') || session('status') || session('error'))
+          @if(session('ok') || session('status'))
+            <div class="rounded-2xl border border-emerald-200 text-emerald-800 bg-emerald-50 px-4 py-3 mb-6">
+              {{ session('ok') ?? session('status') }}
+            </div>
+          @endif
+          @if(session('error'))
+            <div class="rounded-2xl border border-rose-200 text-rose-800 bg-rose-50 px-4 py-3 mb-6">
+              {{ session('error') }}
+            </div>
+          @endif
+        @endif
+
+        @if ($errors->any())
+          <div class="rounded-2xl border border-amber-200 text-amber-900 bg-amber-50 px-4 py-3 mb-6">
+            <div class="font-semibold mb-1">Periksa kembali input kamu:</div>
+            <ul class="list-disc list-inside text-sm space-y-1">
+              @foreach ($errors->all() as $err)
+                <li>{{ $err }}</li>
+              @endforeach
+            </ul>
+          </div>
         @endif
 
         <div class="grid gap-6">
@@ -242,6 +290,19 @@
       </footer>
     </div>
   </div>
+
+  <script>
+    // fokus ke search saat tekan '/'
+    window.addEventListener('keydown', (e) => {
+      if (e.key === '/' && !e.target.matches('input, textarea')) {
+        e.preventDefault();
+        const el = document.getElementById('globalSearch');
+        if (el) el.focus();
+      }
+    });
+    // sync dark mode on load (jaga-jaga)
+    document.documentElement.classList.toggle('dark', localStorage.getItem('theme')==='dark');
+  </script>
 
   @stack('scripts')
 </body>

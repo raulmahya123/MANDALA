@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\DocType;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Str;
 
 class DocTypeController extends Controller
 {
@@ -23,10 +24,18 @@ class DocTypeController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'name' => ['required','string','max:100', Rule::unique('doc_types','name')],
+            'name' => ['required','string','max:100','unique:doc_types,name'],
+            'slug' => ['nullable','string','max:120', 'regex:/^[A-Za-z0-9\-\_]+$/', 'unique:doc_types,slug'],
         ]);
 
-        // slug akan diisi otomatis oleh model
+        // Jika slug kosong → turunkan dari name
+        if (empty($data['slug'])) {
+            $data['slug'] = Str::slug($data['name']);
+        } else {
+            // Paksa slugify biar konsisten
+            $data['slug'] = Str::slug($data['slug']);
+        }
+
         DocType::create($data);
 
         return redirect()->route('admin.doc-types.index')->with('ok','Doc Type dibuat.');
@@ -41,7 +50,13 @@ class DocTypeController extends Controller
     {
         $data = $request->validate([
             'name' => ['required','string','max:100', Rule::unique('doc_types','name')->ignore($docType->id)],
+            'slug' => ['nullable','string','max:120', 'regex:/^[A-Za-z0-9\-\_]+$/', Rule::unique('doc_types','slug')->ignore($docType->id)],
         ]);
+
+        // Jika slug kosong → turunkan dari name, else slugify input
+        $data['slug'] = empty($data['slug'])
+            ? Str::slug($data['name'])
+            : Str::slug($data['slug']);
 
         $docType->update($data);
 
