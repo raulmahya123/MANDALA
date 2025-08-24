@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\DocumentController;
 use App\Http\Controllers\Admin\AccessController;
 use App\Http\Controllers\Admin\FormBuilderController;
 use App\Http\Controllers\Admin\ApprovalController;
+use App\Http\Controllers\Admin\AuditLogController;
 
 // =====================
 // Front Controllers
@@ -106,6 +107,8 @@ Route::middleware(['auth','role:super_admin,admin'])
     // Item & Dokumen
     Route::resource('doc-items', DocItemController::class);
     Route::resource('documents', DocumentController::class);
+    Route::get('audit-logs', [AuditLogController::class, 'index'])->name('audit.index');
+    Route::get('audit-logs/{log}', [AuditLogController::class, 'show'])->name('audit.show');
 
     // Akses per Department (kelola visibilitas/kontributor)
     Route::get('departments/{department:slug}/access', [AccessController::class,'index'])
