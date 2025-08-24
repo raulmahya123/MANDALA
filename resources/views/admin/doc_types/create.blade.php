@@ -1,34 +1,30 @@
 @extends('layouts.admin')
 
+@section('page_title','Tambah Doc Type')
+
 @section('admin')
-<h1 class="text-lg font-semibold mb-4">Tambah Doc Item</h1>
-<form method="POST" action="{{ route('admin.doc-items.store') }}" class="space-y-4">
-  @csrf
-  <div>
-    <label class="block text-sm mb-1">Departemen</label>
-    <select name="department_id" class="w-full rounded border px-3 py-2" required>
-      <option value="">Pilih...</option>
-      @foreach($departments as $d)
-        <option value="{{ $d->id }}">{{ $d->name }}</option>
-      @endforeach
-    </select>
-  </div>
-  <div>
-    <label class="block text-sm mb-1">Doc Type</label>
-    <select name="doc_type_id" class="w-full rounded border px-3 py-2" required>
-      <option value="">Pilih...</option>
-      @foreach($docTypes as $t)
-        <option value="{{ $t->id }}">{{ $t->name }}</option>
-      @endforeach
-    </select>
-  </div>
-  <div>
-    <label class="block text-sm mb-1">Nama Item</label>
-    <input type="text" name="name" class="w-full rounded border px-3 py-2" required>
-  </div>
-  <div class="flex gap-2">
-    <a href="{{ route('admin.doc-items.index') }}" class="px-3 py-2 rounded border">Batal</a>
-    <button class="px-3 py-2 rounded bg-blue-600 text-white">Simpan</button>
-  </div>
-</form>
+<div class="rounded-2xl border bg-white dark:bg-slate-900 p-4 max-w-xl">
+  <h2 class="text-lg font-semibold mb-4">Tambah Doc Type</h2>
+
+  @if($errors->any())
+    <div class="mb-4 rounded-xl border border-red-200 bg-red-50 text-red-700 px-4 py-3">
+      <ul class="list-disc pl-4">
+        @foreach($errors->all() as $e) <li>{{ $e }}</li> @endforeach
+      </ul>
+    </div>
+  @endif
+
+  <form method="POST" action="{{ route('admin.doc-types.store') }}" class="space-y-4">
+    @csrf
+    <div>
+      <label class="block text-sm mb-1">Nama</label>
+      <input type="text" name="name" value="{{ old('name') }}" class="w-full rounded-xl border px-3 py-2" required>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <a href="{{ route('admin.doc-types.index') }}" class="px-3 py-2 rounded-xl border">Batal</a>
+      <button class="px-3 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700">Simpan</button>
+    </div>
+  </form>
+</div>
 @endsection

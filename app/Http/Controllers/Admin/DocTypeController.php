@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\DocType;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class DocTypeController extends Controller
@@ -27,12 +26,10 @@ class DocTypeController extends Controller
             'name' => ['required','string','max:100', Rule::unique('doc_types','name')],
         ]);
 
-        DocType::create([
-            'name' => $data['name'],
-            'slug' => Str::slug($data['name']),
-        ]);
+        // slug akan diisi otomatis oleh model
+        DocType::create($data);
 
-        return redirect()->route('admin.doc-types.index')->with('ok', 'Doc Type dibuat.');
+        return redirect()->route('admin.doc-types.index')->with('ok','Doc Type dibuat.');
     }
 
     public function edit(DocType $docType)
@@ -46,17 +43,14 @@ class DocTypeController extends Controller
             'name' => ['required','string','max:100', Rule::unique('doc_types','name')->ignore($docType->id)],
         ]);
 
-        $docType->update([
-            'name' => $data['name'],
-            'slug' => Str::slug($data['name']),
-        ]);
+        $docType->update($data);
 
-        return redirect()->route('admin.doc-types.index')->with('ok', 'Doc Type diupdate.');
+        return redirect()->route('admin.doc-types.index')->with('ok','Doc Type diupdate.');
     }
 
     public function destroy(DocType $docType)
     {
         $docType->delete();
-        return back()->with('ok', 'Doc Type dihapus.');
+        return back()->with('ok','Doc Type dihapus.');
     }
 }
