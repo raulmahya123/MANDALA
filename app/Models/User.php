@@ -2,11 +2,8 @@
 
 namespace App\Models;
 
-use App\Models\Department;
-use App\Models\DepartmentUserAccess;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -26,7 +23,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        // 'role', // tambahkan jika kamu mengisi role via mass assignment
+        'role', // gunakan jika kamu mengelola role di users table
     ];
 
     /**
@@ -56,32 +53,39 @@ class User extends Authenticatable
      |  RELATIONS
      |=======================================================*/
 
-    /** Grant/ACL per user (tabel: department_user_access) */
+    /**
+     * Grant/ACL per user (tabel: department_user_access)
+     */
     public function acl(): HasMany
     {
         return $this->hasMany(DepartmentUserAccess::class, 'user_id');
     }
 
     /**
-     * Relasi semua departments via pivot department_user (memuat role di pivot).
+     * Semua departments via pivot department_user (memuat role di pivot).
      * Tabel: department_user (user_id, department_id, role, timestamps)
      */
     public function departments(): BelongsToMany
     {
-        return $this->belongsToMany(Department::class, 'department_user')
+        // qualify kolom untuk hindari ambiguous
+        return $this->belongsToMany(Department::class, 'department_user', 'user_id', 'department_id')
             ->withPivot('role')
-            ->withTimestamps();
+            ->withTimestamps()
+            ->select('departments.id', 'departments.name', 'departments.slug');
     }
 
     /**
-     * Hanya departments di mana user berperan sebagai admin (role='admin').
+     * Hanya departments di mana user berperan sebagai admin (role = 'admin').
+     * Sekalian qualify select + orderBy untuk cegah ambiguous & konsisten.
      */
     public function adminDepartments(): BelongsToMany
     {
-        return $this->belongsToMany(Department::class, 'department_user')
+        return $this->belongsToMany(Department::class, 'department_user', 'user_id', 'department_id')
             ->withPivot('role')
             ->wherePivot('role', 'admin')
-            ->withTimestamps();
+            ->withTimestamps()
+            ->select('departments.id', 'departments.name', 'departments.slug')
+            ->orderBy('departments.name');
     }
 
     /* =======================================================
@@ -89,7 +93,8 @@ class User extends Authenticatable
      |=======================================================*/
 
     /**
-     * Kumpulan ID departemen yang bisa diedit user ini (gabungan admin dept + ACL can_edit).
+     * Kumpulan ID departemen yang bisa diedit user ini
+     * (gabungan admin dept + ACL can_edit).
      */
     public function editableDepartmentIds()
     {
@@ -105,7 +110,7 @@ class User extends Authenticatable
     }
 
     /**
-     * Apakah user boleh melihat resource pada scope (dept/docType/item) tertentu.
+     * Apakah user boleh melihat resource pada scope tertentu.
      * View access: super_admin | admin dept | ACL (item > doc_type > department).
      */
     public function hasViewAccess(int $departmentId, ?int $docTypeId = null, ?int $itemId = null): bool
