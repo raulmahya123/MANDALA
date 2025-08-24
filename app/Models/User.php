@@ -100,4 +100,19 @@ class User extends Authenticatable
             }
         })->exists();
     }
+    public function departments()
+{
+    return $this->belongsToMany(\App\Models\Department::class, 'department_user')
+                ->withPivot('role')
+                ->withTimestamps();
+}
+
+public function adminDepartments()
+{
+    return $this->belongsToMany(\App\Models\Department::class, 'department_user')
+                ->withPivot('role')
+                ->wherePivot('role', 'admin')
+                ->withTimestamps();
+}
+
 }

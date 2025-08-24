@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Department;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use App\Models\User;
+
 
 class DepartmentController extends Controller
 {
@@ -60,4 +62,29 @@ class DepartmentController extends Controller
         $department->delete();
         return back()->with('ok','Departemen dihapus.');
     }
+
+
+public function addAdmin(Request $r, \App\Models\Department $department)
+{
+    // hanya super admin
+    abort_unless($r->user()?->role === 'super_admin', 403);
+
+    $data = $r->validate([
+        'user_id' => ['required','exists:users,id'],
+    ]);
+
+    $department->admins()->syncWithoutDetaching([$data['user_id']]);
+
+    return back()->with('ok','Admin departemen ditambahkan.');
+}
+
+public function removeAdmin(Request $r, \App\Models\Department $department, User $user)
+{
+    abort_unless($r->user()?->role === 'super_admin', 403);
+
+    $department->admins()->detach($user->id);
+
+    return back()->with('ok','Admin departemen dihapus.');
+}
+
 }

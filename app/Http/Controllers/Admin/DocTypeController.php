@@ -6,13 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\DocType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class DocTypeController extends Controller
 {
     public function index()
     {
-        $types = DocType::orderBy('name')->paginate(20);
-        return view('admin.doc_types.index', compact('types'));
+        $docTypes = DocType::orderBy('name')->paginate(20);
+        return view('admin.doc_types.index', compact('docTypes'));
     }
 
     public function create()
@@ -22,12 +23,16 @@ class DocTypeController extends Controller
 
     public function store(Request $request)
     {
-        $data = $request->validate(['name'=>'required|string|max:100']);
-        DocType::create([
-            'name'=>$data['name'],
-            'slug'=>Str::slug($data['name'])
+        $data = $request->validate([
+            'name' => ['required','string','max:100', Rule::unique('doc_types','name')],
         ]);
-        return redirect()->route('admin.doc-types.index')->with('ok','Doc Type dibuat.');
+
+        DocType::create([
+            'name' => $data['name'],
+            'slug' => Str::slug($data['name']),
+        ]);
+
+        return redirect()->route('admin.doc-types.index')->with('ok', 'Doc Type dibuat.');
     }
 
     public function edit(DocType $docType)
@@ -37,17 +42,21 @@ class DocTypeController extends Controller
 
     public function update(Request $request, DocType $docType)
     {
-        $data = $request->validate(['name'=>'required|string|max:100']);
-        $docType->update([
-            'name'=>$data['name'],
-            'slug'=>Str::slug($data['name'])
+        $data = $request->validate([
+            'name' => ['required','string','max:100', Rule::unique('doc_types','name')->ignore($docType->id)],
         ]);
-        return redirect()->route('admin.doc-types.index')->with('ok','Doc Type diupdate.');
+
+        $docType->update([
+            'name' => $data['name'],
+            'slug' => Str::slug($data['name']),
+        ]);
+
+        return redirect()->route('admin.doc-types.index')->with('ok', 'Doc Type diupdate.');
     }
 
     public function destroy(DocType $docType)
     {
         $docType->delete();
-        return back()->with('ok','Doc Type dihapus.');
+        return back()->with('ok', 'Doc Type dihapus.');
     }
 }
