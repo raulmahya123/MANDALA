@@ -172,6 +172,75 @@
         </a>
         @endif
 
+        {{-- === Access Control (per Department) === --}}
+        @php
+          $u = auth()->user();
+          $manageableDepts = collect();
+          if ($u) {
+            $manageableDepts = $u->role === 'super_admin'
+              ? \App\Models\Department::orderBy('name')->get(['id','name','slug'])
+              : $u->adminDepartments()->orderBy('name')->get(['id','name','slug']);
+          }
+        @endphp
+
+        @if($manageableDepts->isNotEmpty())
+          <div class="nav-divider px-3 text-[11px] font-semibold tracking-wide text-slate-500 dark:text-slate-400 mt-4 mb-2 uppercase">
+            Access Dept
+          </div>
+
+          <div x-data="{ openAccess: {{ request()->routeIs('admin.departments.access.*') ? 'true' : 'false' }} }" class="px-2">
+            <button
+              @click="openAccess=!openAccess"
+              class="w-full nav-link group flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800"
+              :class="openAccess ? 'nav-active' : ''">
+              <svg class="w-5 h-5 opacity-80 group-hover:opacity-100" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-width="1.6" stroke-linecap="round" d="M3 6h18M3 12h18M3 18h18"/>
+              </svg>
+              <span class="nav-label flex-1 text-left">Access Dept</span>
+              <svg class="w-4 h-4 transition-transform duration-200" :class="openAccess ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-width="1.6" stroke-linecap="round" d="m6 9 6 6 6-6"/>
+              </svg>
+            </button>
+
+            <div x-cloak x-show="openAccess" x-transition>
+              <ul class="mt-2 space-y-1">
+                @foreach($manageableDepts->take(12) as $d)
+                  <li>
+                    <a href="{{ route('admin.departments.access.index', $d) }}"
+                       @click="sidebarOpen=false"
+                       class="ml-9 block px-3 py-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 {{ (request()->routeIs('admin.departments.access.*') && request()->route('department')?->slug === $d->slug) ? 'bg-emerald-50/70 dark:bg-emerald-900/20' : '' }}">
+                      {{ $d->name }}
+                    </a>
+                  </li>
+                @endforeach
+
+                @if($manageableDepts->count() > 12)
+                  <li class="ml-9">
+                    <a href="{{ route('admin.departments.index') }}"
+                       @click="sidebarOpen=false"
+                       class="block px-3 py-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">
+                      Lihat semua…
+                    </a>
+                  </li>
+                @endif
+              </ul>
+            </div>
+          </div>
+        @elseif(auth()->user()?->role === 'super_admin')
+          {{-- fallback super_admin --}}
+          <div class="nav-divider px-3 text-[11px] font-semibold tracking-wide text-slate-500 dark:text-slate-400 mt-4 mb-2 uppercase">
+            Access Dept
+          </div>
+          <a href="{{ route('admin.departments.index') }}"
+             @click="sidebarOpen=false"
+             class="nav-link group flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800">
+            <svg class="w-5 h-5 opacity-80 group-hover:opacity-100" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-width="1.6" stroke-linecap="round" d="M3 6h18M3 12h18M3 18h18"/>
+            </svg>
+            <span class="nav-label">Kelola Akses</span>
+          </a>
+        @endif
+
         <div class="mt-5 px-3">
           <a href="{{ route('home') }}" @click="sidebarOpen=false" class="nav-link group flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800">
             <svg class="w-5 h-5 opacity-80 group-hover:opacity-100" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="1.6" stroke-linecap="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/><path stroke-width="1.6" stroke-linecap="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7Z"/></svg>

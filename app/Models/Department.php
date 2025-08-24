@@ -15,9 +15,9 @@ class Department extends Model
         'is_active' => 'boolean',
     ];
 
-    /**
-     * Isi slug otomatis dari name kalau slug kosong.
-     */
+    /* ---------------------------------
+     | Slug otomatis dari name
+     |----------------------------------*/
     protected static function booted(): void
     {
         static::saving(function (self $m) {
@@ -27,20 +27,30 @@ class Department extends Model
         });
     }
 
-    /**
-     * (Opsional) Pakai slug untuk route model binding.
-     * Hapus method ini jika kamu tetap ingin pakai id.
-     */
+    /* ---------------------------------
+     | Route binding pakai slug
+     |----------------------------------*/
     public function getRouteKeyName(): string
     {
         return 'slug';
     }
 
-    /** ================== RELASI ================== */
+    /* ---------------------------------
+     | Scopes
+     |----------------------------------*/
+    public function scopeActive($q)
+    {
+        return $q->where('is_active', true);
+    }
 
+    /* ---------------------------------
+     | Relasi
+     |----------------------------------*/
+
+    // DocType lewat pivot (tegasin nama tabel pivot supaya eksplisit)
     public function docTypes(): BelongsToMany
     {
-        return $this->belongsToMany(DocType::class)
+        return $this->belongsToMany(DocType::class, 'department_doc_type', 'department_id', 'doc_type_id')
             ->withPivot(['is_active','sort_order'])
             ->withTimestamps();
     }
@@ -55,7 +65,7 @@ class Department extends Model
         return $this->hasMany(Document::class);
     }
 
-    /** Semua user di departemen (punya role di pivot department_user) */
+    // Semua user yang ter‐asosiasi (punya role di pivot department_user)
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'department_user')
@@ -63,12 +73,18 @@ class Department extends Model
             ->withTimestamps();
     }
 
-    /** Hanya admin departemen (pivot role = admin) */
+    // Hanya admin departemen — harden: LOWER/TRIM biar tahan typo casing/spasi
     public function admins(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'department_user')
             ->withPivot('role')
-            ->wherePivot('role','admin')
+            ->whereRaw("LOWER(TRIM(department_user.role)) = 'admin'")
             ->withTimestamps();
+    }
+
+    // Grant ACL per user (department_user_access)
+    public function accessGrants(): HasMany
+    {
+        return $this->hasMany(DepartmentUserAccess::class, 'department_id');
     }
 }
