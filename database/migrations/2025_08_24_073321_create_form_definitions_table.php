@@ -11,18 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('form_definitions', function (Blueprint $t) {
-    $t->id();
-    $t->foreignId('department_id')->constrained()->cascadeOnDelete();
-    $t->foreignId('doc_type_id')->constrained()->cascadeOnDelete();
-    $t->foreignId('doc_item_id')->constrained()->cascadeOnDelete();
-    $t->string('slug');
-    $t->string('name');
-    $t->boolean('is_active')->default(true);
-    $t->timestamps();
+       Schema::create('form_definitions', function (Blueprint $table) {
+    $table->id();
+    $table->foreignId('department_id')->constrained()->cascadeOnDelete();
+    $table->foreignId('doc_type_id')->constrained()->cascadeOnDelete();
+    $table->foreignId('doc_item_id')->nullable()->constrained()->cascadeOnDelete();
+    $table->string('title'); // <- tambahkan ini
+    $table->string('slug')->unique(); // <- tambahkan ini
+    $table->boolean('is_active')->default(true); // <- tambahkan ini
+    $table->timestamps();
 
     // Unique dengan nama index pendek
-    $t->unique(
+    $table->unique(
         ['department_id', 'doc_type_id', 'doc_item_id', 'slug'],
         'form_def_slug_unique'
     );
