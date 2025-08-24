@@ -55,9 +55,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', fn () => redirect()->route('home'))->name('dashboard');
 
     // Isi form (FormEntry)
-    Route::get('/form/{form:slug}', [FormEntryController::class,'show'])->name('form.fill');
-    Route::post('/form/{form:slug}', [FormEntryController::class,'store'])->name('form.submit');
-    Route::get('/entry/{entry}', [FormEntryController::class,'showEntry'])->name('form.entry.show');
+    Route::get('/forms', [FormEntryController::class, 'index'])->name('forms.index');
+    Route::get('/form/{form:slug}', [FormEntryController::class, 'show'])->name('form.fill');
+    Route::post('/form/{form:slug}', [FormEntryController::class, 'store'])->name('form.submit');
+    Route::get('/entry/{entry}', [FormEntryController::class, 'showEntry'])->name('form.entry.show');
 });
 
 
