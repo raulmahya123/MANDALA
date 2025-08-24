@@ -8,7 +8,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use App\Models\User;
 
-
 class DepartmentController extends Controller
 {
     public function index()
@@ -25,13 +24,16 @@ class DepartmentController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'name' => 'required|string|max:100',
+            'name'      => 'required|string|max:100',
+            'slug'      => 'required|string|max:120|alpha_dash|unique:departments,slug',
+            'is_active' => 'nullable|boolean',
         ]);
 
-        Department::create([
-            'name' => $data['name'],
-            'slug' => Str::slug($data['name']),
-        ]);
+        // Normalisasi slug dari input user (bukan dari name)
+        $data['slug'] = Str::slug($data['slug']);
+        $data['is_active'] = $request->boolean('is_active');
+
+        Department::create($data);
 
         return redirect()->route('admin.departments.index')->with('ok','Departemen dibuat.');
     }
@@ -44,15 +46,16 @@ class DepartmentController extends Controller
     public function update(Request $request, Department $department)
     {
         $data = $request->validate([
-            'name' => 'required|string|max:100',
-            'is_active' => 'boolean',
+            'name'      => 'required|string|max:100',
+            'slug'      => 'required|string|max:120|alpha_dash|unique:departments,slug,' . $department->id,
+            'is_active' => 'nullable|boolean',
         ]);
 
-        $department->update([
-            'name' => $data['name'],
-            'slug' => Str::slug($data['name']),
-            'is_active' => $request->boolean('is_active'),
-        ]);
+        // Tetap pakai slug dari input user
+        $data['slug'] = Str::slug($data['slug']);
+        $data['is_active'] = $request->boolean('is_active');
+
+        $department->update($data);
 
         return redirect()->route('admin.departments.index')->with('ok','Departemen diupdate.');
     }
@@ -63,28 +66,26 @@ class DepartmentController extends Controller
         return back()->with('ok','Departemen dihapus.');
     }
 
+    public function addAdmin(Request $r, Department $department)
+    {
+        // hanya super admin
+        abort_unless($r->user()?->role === 'super_admin', 403);
 
-public function addAdmin(Request $r, \App\Models\Department $department)
-{
-    // hanya super admin
-    abort_unless($r->user()?->role === 'super_admin', 403);
+        $data = $r->validate([
+            'user_id' => ['required','exists:users,id'],
+        ]);
 
-    $data = $r->validate([
-        'user_id' => ['required','exists:users,id'],
-    ]);
+        $department->admins()->syncWithoutDetaching([$data['user_id']]);
 
-    $department->admins()->syncWithoutDetaching([$data['user_id']]);
+        return back()->with('ok','Admin departemen ditambahkan.');
+    }
 
-    return back()->with('ok','Admin departemen ditambahkan.');
-}
+    public function removeAdmin(Request $r, Department $department, User $user)
+    {
+        abort_unless($r->user()?->role === 'super_admin', 403);
 
-public function removeAdmin(Request $r, \App\Models\Department $department, User $user)
-{
-    abort_unless($r->user()?->role === 'super_admin', 403);
+        $department->admins()->detach($user->id);
 
-    $department->admins()->detach($user->id);
-
-    return back()->with('ok','Admin departemen dihapus.');
-}
-
+        return back()->with('ok','Admin departemen dihapus.');
+    }
 }
