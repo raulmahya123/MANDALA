@@ -13,7 +13,7 @@
     toggleDark(){
       this.dark = !this.dark;
       localStorage.setItem('theme', this.dark ? 'dark' : 'light');
-      // tidak perlu sentuh class di sini — ditangani oleh $watch di x-init
+      // class html di-sync oleh $watch di x-init
     },
 
     toggleCollapse(){
@@ -31,7 +31,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <meta name="csrf-token" content=\"{{ csrf_token() }}\">
   <title>@yield('title','Admin') — {{ config('app.name') }}</title>
 
   @vite(['resources/css/app.css','resources/js/app.js'])
@@ -250,7 +250,8 @@
                 <li>
                   <a href="{{ route('admin.departments.access.index', $d) }}"
                      @click="sidebarOpen=false"
-                     class="ml-9 block px-3 py-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 {{ (request()->routeIs('admin.departments.access.*') && request()->route('department')?->slug === $d->slug) ? 'bg-emerald-50/70 dark:bg-emerald-900/20' : '' }}">
+                     class="ml-9 block px-3 py-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800
+                     {{ (request()->routeIs('admin.departments.access.*') && (request()->route('department')?->slug === $d->slug)) ? 'bg-emerald-50/70 dark:bg-emerald-900/20' : '' }}">
                     {{ $d->name }}
                   </a>
                 </li>
@@ -419,7 +420,6 @@
         if (el) el.focus();
       }
     });
-    // sync dark mode on load
   </script>
 
   @stack('scripts')

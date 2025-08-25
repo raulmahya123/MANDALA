@@ -1,72 +1,32 @@
 @extends('layouts.admin')
+@section('title','Tambah Department')
 
 @section('admin')
-<h1 class="text-lg font-semibold mb-4">Tambah Department</h1>
+@if($errors->any())
+  <div class="mb-3 p-3 rounded bg-red-50 border border-red-200 text-red-800">
+    <ul class="list-disc ml-5">
+      @foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach
+    </ul>
+  </div>
+@endif
 
-<form method="POST" action="{{ route('admin.departments.store') }}" class="space-y-4">
+<form method="POST" action="{{ route('admin.departments.store') }}" class="max-w-xl rounded-xl border bg-white p-4 space-y-4">
   @csrf
-
-  {{-- Nama --}}
   <div>
-    <label class="block text-sm mb-1">Nama</label>
-    <input id="name" type="text" name="name" value="{{ old('name') }}"
-           class="w-full rounded border px-3 py-2" required>
+    <label class="block mb-1">Nama</label>
+    <input type="text" name="name" value="{{ old('name') }}" class="w-full rounded border px-3 py-2" required>
   </div>
-
-  {{-- Slug --}}
   <div>
-    <div class="flex items-center justify-between">
-      <label class="block text-sm mb-1">Slug (opsional)</label>
-      <label class="flex items-center gap-2 text-xs text-slate-500">
-        <input id="autoSlug" type="checkbox" class="rounded" checked>
-        Auto-slug dari Nama
-      </label>
-    </div>
-    <input id="slug" type="text" name="slug" value="{{ old('slug') }}"
-           placeholder="contoh: hrga"
-           class="w-full rounded border px-3 py-2">
-    <p class="text-xs text-slate-500 mt-1">Huruf kecil, angka, dan tanda minus. Kosongkan jika ingin otomatis.</p>
+    <label class="block mb-1">Slug (opsional)</label>
+    <input type="text" name="slug" value="{{ old('slug') }}" class="w-full rounded border px-3 py-2" placeholder="auto jika kosong">
   </div>
-
-  {{-- Status Aktif --}}
   <div class="flex items-center gap-2">
-    <input type="checkbox" id="is_active" name="is_active" value="1"
-           class="rounded" {{ old('is_active', true) ? 'checked' : '' }}>
-    <label for="is_active" class="text-sm">Aktif</label>
+    <input type="checkbox" name="is_active" value="1" id="is_active" checked>
+    <label for="is_active">Active</label>
   </div>
-
-  {{-- Tombol --}}
   <div class="flex gap-2">
+    <button class="px-3 py-2 rounded bg-emerald-600 text-white">Simpan</button>
     <a href="{{ route('admin.departments.index') }}" class="px-3 py-2 rounded border">Batal</a>
-    <button class="px-3 py-2 rounded bg-blue-600 text-white">Simpan</button>
   </div>
 </form>
-
-{{-- Auto generate slug --}}
-@push('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-  const nameEl = document.getElementById('name');
-  const slugEl = document.getElementById('slug');
-  const autoEl = document.getElementById('autoSlug');
-
-  const slugify = str => (str || '')
-    .toString()
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '');
-
-  const sync = () => { if (autoEl && autoEl.checked) slugEl.value = slugify(nameEl.value) };
-
-  if (nameEl && slugEl && autoEl) {
-    nameEl.addEventListener('input', sync);
-    autoEl.addEventListener('change', sync);
-    sync();
-  }
-});
-</script>
-@endpush
-
 @endsection

@@ -104,19 +104,42 @@ Route::middleware(['auth','role:super_admin,admin'])
     | Admin Departemen + Super Admin
     |---------------------------------------
     */
+
     // Item & Dokumen
     Route::resource('doc-items', DocItemController::class);
     Route::resource('documents', DocumentController::class);
+
+    // Audit Logs
     Route::get('audit-logs', [AuditLogController::class, 'index'])->name('audit.index');
     Route::get('audit-logs/{log}', [AuditLogController::class, 'show'])->name('audit.show');
 
-    // Akses per Department (kelola visibilitas/kontributor)
+    // Akses per Department (granular via AccessController)
     Route::get('departments/{department:slug}/access', [AccessController::class,'index'])
         ->name('departments.access.index');
     Route::post('departments/{department:slug}/access', [AccessController::class,'store'])
         ->name('departments.access.store');
     Route::delete('departments/{department:slug}/access/{access}', [AccessController::class,'destroy'])
         ->name('departments.access.destroy');
+
+    // Members (pivot department_user) — DILETAKKAN DI SINI (bukan di subgroup super_admin)
+    Route::get('departments/{department:slug}/members', [DepartmentController::class,'members'])
+        ->name('departments.members');
+    Route::post('departments/{department:slug}/members', [DepartmentController::class,'membersStore'])
+        ->name('departments.members.store');
+    Route::patch('departments/{department:slug}/members/{user}', [DepartmentController::class,'membersUpdate'])
+        ->name('departments.members.update');
+    Route::delete('departments/{department:slug}/members/{user}', [DepartmentController::class,'membersDestroy'])
+        ->name('departments.members.destroy');
+
+    // Doc Types terpasang pada Department (pivot department_doc_type)
+    Route::get('departments/{department:slug}/doc-types', [DepartmentController::class,'docTypes'])
+        ->name('departments.docTypes');
+    Route::post('departments/{department:slug}/doc-types', [DepartmentController::class,'docTypesAttach'])
+        ->name('departments.docTypes.attach');
+    Route::patch('departments/{department:slug}/doc-types/{docType}', [DepartmentController::class,'docTypesUpdate'])
+        ->name('departments.docTypes.update');
+    Route::delete('departments/{department:slug}/doc-types/{docType}', [DepartmentController::class,'docTypesDetach'])
+        ->name('departments.docTypes.detach');
 
     // Form Builder
     Route::get('forms', [FormBuilderController::class,'index'])->name('forms.index');
@@ -134,7 +157,7 @@ Route::middleware(['auth','role:super_admin,admin'])
     Route::get('approvals', [ApprovalController::class,'index'])->name('approvals.index');
     Route::post('approvals/{entry}/decide', [ApprovalController::class,'decide'])->name('approvals.decide');
 
-    // Export (letakkan sekali di sini, tidak duplikat)
+    // Export
     Route::get('forms/{form:slug}/export/excel', [FormBuilderController::class,'exportExcel'])->name('forms.export.excel');
     Route::get('forms/{form:slug}/export/pdf',   [FormBuilderController::class,'exportPdf'])->name('forms.export.pdf');
 });
